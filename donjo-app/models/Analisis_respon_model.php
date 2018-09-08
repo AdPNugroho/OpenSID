@@ -1,19 +1,21 @@
-<?php class Analisis_respon_model extends CI_Model{
-	function __construct(){
+<?php class Analisis_respon_model extends CI_Model {
+
+	public function __construct()
+	{
 		parent::__construct();
 		$this->load->helper('excel');
 	}
-	function autocomplete(){
-		//$sql = "SELECT no_kk FROM tweb_keluarga
-		//UNION SELECT t.nama FROM tweb_keluarga u LEFT JOIN tweb_penduduk t ON u.nik_kepala = t.id LEFT JOIN tweb_wil_clusterdesa c ON t.id_cluster = c.id //WHERE 1 ";
+
+	public function autocomplete()
+	{
 		$subjek = $_SESSION['subjek_tipe'];
-		switch($subjek){
+		switch ($subjek)
+		{
 			case 1: $sql = "SELECT nik AS no_kk FROM tweb_penduduk UNION SELECT u.nama FROM tweb_penduduk u LEFT JOIN tweb_wil_clusterdesa c ON u.id_cluster = c.id WHERE status_dasar=1 "; break;
 			case 2: $sql = "SELECT no_kk FROM tweb_keluarga UNION SELECT p.nama FROM tweb_keluarga u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1"; break;
 			case 3: $sql = "SELECT no_kk FROM tweb_rtm UNION SELECT p.nama FROM tweb_rtm u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1"; break;
 			case 4: $sql = "SELECT u.nama AS no_kk FROM kelompok u LEFT JOIN tweb_penduduk p ON u.id_ketua = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1"; break;
 			default: return null;
-
 		}
 		$sql .= $this->dusun_sql();
 		$sql .= $this->rw_sql();
@@ -21,84 +23,101 @@
 		$query = $this->db->query($sql);
 		$data = $query->result_array();
 
-		$i=0;
-		$outp='';
-		while($i<count($data)){
+		$outp = '';
+		for ($i=0; $i < count($data); $i++)
+		{
 			$outp .= ',"' .$data[$i]['no_kk']. '"';
-			$i++;
 		}
 		$outp = strtolower(substr($outp, 1));
 		$outp = '[' .$outp. ']';
 		return $outp;
 	}
-	function search_sql(){
-		if(isset($_SESSION['cari'])){
-		$cari = $_SESSION['cari'];
+
+	private function search_sql()
+	{
+		if (isset($_SESSION['cari']))
+		{
+			$cari = $_SESSION['cari'];
 			$kw = $this->db->escape_like_str($cari);
 			$kw = '%' .$kw. '%';
 			$search_sql= " AND (u.no_kk LIKE '$kw' OR p.nama LIKE '$kw')";
 			$subjek = $_SESSION['subjek_tipe'];
-			switch($subjek){
-				case 1: $search_sql= " AND (u.nik LIKE '$kw' OR u.nama LIKE '$kw')"; break;
-				case 2: $search_sql= " AND (u.no_kk LIKE '$kw' OR p.nama LIKE '$kw')"; break;
-				case 3: $search_sql= " AND ((u.no_kk LIKE '$kw' OR p.nama LIKE '$kw') OR ((SELECT COUNT(id) FROM tweb_penduduk WHERE nik LIKE '$kw' AND id_rtm = u.id) > 1) OR ((SELECT COUNT(id) FROM tweb_penduduk WHERE nama LIKE '$kw' AND id_rtm = u.id) > 1))"; break;
-				case 4: $search_sql= " AND (u.nama LIKE '$kw' OR p.nama LIKE '$kw')"; break;
+			switch ($subjek)
+			{
+				case 1: $search_sql = " AND (u.nik LIKE '$kw' OR u.nama LIKE '$kw')"; break;
+				case 2: $search_sql = " AND (u.no_kk LIKE '$kw' OR p.nama LIKE '$kw')"; break;
+				case 3: $search_sql = " AND ((u.no_kk LIKE '$kw' OR p.nama LIKE '$kw') OR ((SELECT COUNT(id) FROM tweb_penduduk WHERE nik LIKE '$kw' AND id_rtm = u.id) > 1) OR ((SELECT COUNT(id) FROM tweb_penduduk WHERE nama LIKE '$kw' AND id_rtm = u.id) > 1))"; break;
+				case 4: $search_sql = " AND (u.nama LIKE '$kw' OR p.nama LIKE '$kw')"; break;
 				default: return null;
 			}
 			return $search_sql;
 		}
 	}
-	function dusun_sql(){
-		if(isset($_SESSION['dusun'])){
+
+	private function dusun_sql()
+	{
+		if (isset($_SESSION['dusun']))
+		{
 			$kf = $_SESSION['dusun'];
-			$dusun_sql= " AND c.dusun = '$kf'";
-		return $dusun_sql;
+			$dusun_sql = " AND c.dusun = '$kf'";
+			return $dusun_sql;
 		}
 	}
-	function rw_sql(){
-		if(isset($_SESSION['rw'])){
+
+	private function rw_sql()
+	{
+		if (isset($_SESSION['rw']))
+		{
 			$kf = $_SESSION['rw'];
-			$rw_sql= " AND c.rw = '$kf'";
-		return $rw_sql;
+			$rw_sql = " AND c.rw = '$kf'";
+			return $rw_sql;
 		}
 	}
-	function rt_sql(){
-		if(isset($_SESSION['rt'])){
+
+	private function rt_sql()
+	{
+		if (isset($_SESSION['rt']))
+		{
 			$kf = $_SESSION['rt'];
-			$rt_sql= " AND c.rt = '$kf'";
-		return $rt_sql;
+			$rt_sql = " AND c.rt = '$kf'";
+			return $rt_sql;
 		}
 	}
-	function isi_sql(){
-		if(isset($_SESSION['isi'])){
+
+	private function isi_sql()
+	{
+		if (isset($_SESSION['isi']))
+		{
 			$per = $this->get_aktif_periode();
 			$kf = $_SESSION['isi'];
-			if($kf==1)
-				$isi_sql= " AND (SELECT COUNT(id_subjek) FROM analisis_respon_hasil WHERE id_subjek = u.id AND id_periode=$per ) = 1 ";
+			if ($kf == 1)
+				$isi_sql = " AND (SELECT COUNT(id_subjek) FROM analisis_respon_hasil WHERE id_subjek = u.id AND id_periode=$per ) = 1 ";
 			else
-				$isi_sql= " AND (SELECT COUNT(id_subjek) FROM analisis_respon_hasil WHERE id_subjek = u.id AND id_periode=$per ) = 0 ";
-
-		return $isi_sql;
+				$isi_sql = " AND (SELECT COUNT(id_subjek) FROM analisis_respon_hasil WHERE id_subjek = u.id AND id_periode=$per ) = 0 ";
+			return $isi_sql;
 		}
 	}
-	function kelompok_sql($kf=0){
-		$kelompok_sql= " AND id_master = $kf ";
+
+	private function kelompok_sql($kf=0)
+	{
+		$kelompok_sql = " AND id_master = $kf ";
 		return $kelompok_sql;
 	}
-	function paging($p=1,$o=0){
+
+	public function paging($p=1, $o=0)
+	{
 		$master = $this->get_analisis_master();
 		$id_kelompok = $master['id_kelompok'];
 		$subjek = $_SESSION['subjek_tipe'];
-		switch($subjek){
+		switch ($subjek)
+		{
 			case 1: $sql = "SELECT COUNT(u.id) AS id FROM tweb_penduduk u LEFT JOIN tweb_wil_clusterdesa c ON u.id_cluster = c.id WHERE status_dasar=1 "; break;
 			case 2: $sql = "SELECT COUNT(u.id) AS id FROM tweb_keluarga u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1"; break;
 			case 3: $sql = "SELECT COUNT(u.id) AS id FROM tweb_rtm u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1"; break;
 			case 4: $sql = "SELECT COUNT(u.id) AS id FROM kelompok u LEFT JOIN tweb_penduduk p ON u.id_ketua = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1"; break;
 			default: return null;
-
 		}
-		//$sql = "SELECT COUNT(u.id) AS id FROM tweb_keluarga u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1";
-		if($id_kelompok != 0)
+		if ($id_kelompok != 0)
 			$sql .= $this->kelompok_sql($id_kelompok);
 
 		$sql .= $this->search_sql();
@@ -118,12 +137,15 @@
 
 		return $this->paging;
 	}
-	function list_data($o=0,$offset=0,$limit=500){
+
+	public function list_data($o=0, $offset=0, $limit=500)
+	{
 		$per = $this->get_aktif_periode();
 		$master = $this->get_analisis_master();
 		$id_kelompok = $master['id_kelompok'];
 
-		switch($o){
+		switch ($o)
+		{
 			case 1: $order_sql = ' ORDER BY u.id'; break;
 			case 2: $order_sql = ' ORDER BY u.id DESC'; break;
 			case 3: $order_sql = ' ORDER BY u.id'; break;
@@ -134,7 +156,8 @@
 		$paging_sql = ' LIMIT ' .$offset. ',' .$limit;
 
 		$subjek = $_SESSION['subjek_tipe'];
-		switch($subjek){
+		switch ($subjek)
+		{
 			case 1: $sql = "SELECT u.id,u.nik AS nid,u.nama,u.sex,c.dusun,c.rw,c.rt,(SELECT id_subjek FROM analisis_respon WHERE id_subjek = u.id AND id_periode=? LIMIT 1) as cek FROM tweb_penduduk u LEFT JOIN tweb_wil_clusterdesa c ON u.id_cluster = c.id WHERE u.status_dasar = 1 "; break;
 
 			case 2: $sql = "SELECT u.id,u.no_kk AS nid,p.nama,p.sex,c.dusun,c.rw,c.rt,(SELECT id_subjek FROM analisis_respon WHERE id_subjek = u.id AND id_periode=? LIMIT 1) as cek FROM tweb_keluarga u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1" ; break;
@@ -144,10 +167,8 @@
 			case 4: $sql = "SELECT u.id,u.kode AS nid,u.nama,p.sex,c.dusun,c.rw,c.rt,(SELECT id_subjek FROM analisis_respon WHERE id_subjek = u.id AND id_periode=? LIMIT 1) as cek FROM kelompok u LEFT JOIN tweb_penduduk p ON u.id_ketua = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1 "; break;
 
 			default: return null;
-
 		}
-		//$sql = "SELECT u.*,p.nama,c.dusun,c.rw,c.rt,(SELECT id FROM analisis_respon WHERE id_subjek = u.id AND id_periode=? LIMIT 1) as cek FROM tweb_keluarga u LEFT JOIN tweb_penduduk p ON u.nik_kepala = p.id LEFT JOIN tweb_wil_clusterdesa c ON p.id_cluster = c.id WHERE 1 ";
-		if($id_kelompok != 0)
+		if ($id_kelompok != 0)
 			$sql .= $this->kelompok_sql($id_kelompok);
 
 		$sql .= $this->search_sql();
@@ -159,14 +180,12 @@
 		$sql .= $paging_sql;
 
 		$query = $this->db->query($sql,$per);
-		$data=$query->result_array();
+		$data =$query->result_array();
 
-		$i=0;
-		$j=$offset;
-		while($i<count($data)){
+		$j = $offset;
+		for ($i=0; $i<count($data); $i++)
+		{
 			$data[$i]['no']=$j+1;
-
-			//$this->update_hasil($data[$i]['id']);
 
 			if($data[$i]['cek'])
 				$data[$i]['set'] = "<img src='".base_url()."assets/images/icon/ok.png'>";
@@ -180,63 +199,84 @@
 				$data[$i]['jk'] = "P";
 
 			$data[$i]['alamat'] = $data[$i]['dusun']." RW-".$data[$i]['rw']." RT-".$data[$i]['rt'];
-			$i++;
 			$j++;
 		}
 		return $data;
 	}
-	function update_kuisioner($id=0,$per=0){
-		$outp=false;
-		if($per == 0){
+
+	public function update_kuisioner($id=0, $per=0)
+	{
+		$outp = false;
+		if ($per == 0)
+		{
 			$per = $this->get_aktif_periode();
 			$id_master = $_SESSION['analisis_master'];
-		}else{
+		}
+		else
+		{
 			$sql = "SELECT id_master FROM analisis_periode WHERE id = ?";
 			$query = $this->db->query($sql,$per);
 			$id_master = $query->row_array();
 			$id_master = $id_master['id_master'];
 		}
-		$ia=0;$it=0;$ir=0;$ic=0;
+		$ia = 0;$it = 0;$ir = 0;$ic = 0;
 
-
-		if(isset($_POST['rb'])){
+		if (isset($_POST['rb']))
+		{
 			$id_rbx = $_POST['rb'];
-			foreach($id_rbx as $id_px){
-				if($id_px != ""){
-					$ir=1;
+			foreach ($id_rbx as $id_px)
+			{
+				if ($id_px != "")
+				{
+					$ir = 1;
 				}
 			}
 		}
-		if(isset($_POST['cb'])){
+		if (isset($_POST['cb']))
+		{
 			$id_rby = $_POST['cb'];
-			foreach($id_rby as $id_py){
-				if($id_py != ""){
-					$ic=1;
+			foreach ($id_rby as $id_py)
+			{
+				if ($id_py != "")
+				{
+					$ic = 1;
 				}
 			}
 		}
-		if(isset($_POST['ia'])){
+		if (isset($_POST['ia']))
+		{
 			$id_iax = $_POST['ia'];
-			foreach($id_iax as $id_px){
-				if($id_px != ""){$ia=1;}
+			foreach ($id_iax as $id_px)
+			{
+				if ($id_px != "")
+				{
+					$ia = 1;
+				}
 			}
 		}
-		if(isset($_POST['it'])){
+		if (isset($_POST['it']))
+		{
 			$id_iay = $_POST['it'];
-			foreach($id_iay as $id_py){
-				if($id_py != ""){$it=1;}
+			foreach ($id_iay as $id_py)
+			{
+				if ($id_py != "")
+				{
+					$it = 1;
+				}
 			}
 		}
 
 		//CEK ada input
-		if($ir!=0 OR $ic!=0 OR $ia!=0 OR $it!=0){
-
+		if($ir != 0 OR $ic != 0 OR $ia != 0 OR $it != 0)
+		{
 			$sql = "DELETE FROM analisis_respon WHERE id_subjek = ? AND id_periode=?";
-			$this->db->query($sql,array($id,$per));
-			if(!empty($_POST['rb'])){
+			$this->db->query($sql, array($id, $per));
+			if (!empty($_POST['rb']))
+			{
 				$id_rb = $_POST['rb'];
-				foreach($id_rb as $id_p){
-					if(empty($id_p)) continue; // Abaikan isian kosong
+				foreach ($id_rb as $id_p)
+				{
+					if (empty($id_p)) continue; // Abaikan isian kosong
 					$p = preg_split("/\./", $id_p);
 
 					$data['id_subjek'] = $id;
@@ -246,97 +286,106 @@
 					$outp = $this->db->insert('analisis_respon',$data);
 				}
 			}
-			if(isset($_POST['cb'])){
+			if (isset($_POST['cb']))
+			{
 				$id_cb = $_POST['cb'];
-				if($id_cb){
-					foreach($id_cb as $id_p){
+				if ($id_cb)
+				{
+					foreach ($id_cb as $id_p)
+					{
 						$p = preg_split("/\./", $id_p);
 
 						$data['id_subjek'] = $id;
 						$data['id_periode'] = $per;
 						$data['id_indikator'] = $p[0];
 						$data['id_parameter'] = $p[1];
-						$outp = $this->db->insert('analisis_respon',$data);
+						$outp = $this->db->insert('analisis_respon', $data);
 					}
 				}
 			}
 
-			if(isset($_POST['ia'])){
+			if (isset($_POST['ia']))
+			{
 				$id_ia = $_POST['ia'];
-				foreach($id_ia as $id_p){
-					if($id_p != ""){
+				foreach ($id_ia as $id_p)
+				{
+					if ($id_p != "")
+					{
 						unset($data);
 						$indikator = key($id_ia);
 
 						$sql = "SELECT * FROM analisis_parameter u WHERE jawaban = ? AND id_indikator = ?";
-						$query = $this->db->query($sql,array($id_p,$indikator));
+						$query = $this->db->query($sql,array($id_p, $indikator));
 						$dx = $query->row_array();
-						if(!$dx){
-
+						if (!$dx)
+						{
 							$data['id_indikator'] = $indikator;
 							$data['jawaban'] = $id_p;
-							$this->db->insert('analisis_parameter',$data);
+							$this->db->insert('analisis_parameter', $data);
 							unset($data);
 
 							$sql = "SELECT * FROM analisis_parameter u WHERE jawaban = ? AND id_indikator = ?";
-							$query = $this->db->query($sql,array($id_p,$indikator));
+							$query = $this->db->query($sql, array($id_p, $indikator));
 							$dx = $query->row_array();
 
 							$data['id_parameter'] = $dx['id'];
 							$data['id_indikator'] = $indikator;
 							$data['id_subjek'] = $id;
 							$data['id_periode'] = $per;
-							$outp = $this->db->insert('analisis_respon',$data);
-
-						}else{
-
+							$outp = $this->db->insert('analisis_respon', $data);
+						}
+						else
+						{
 							unset($data);
 							$data['id_indikator'] = $indikator;
 							$data['id_parameter'] = $dx['id'];
 							$data['id_subjek'] = $id;
 							$data['id_periode'] = $per;
-							$outp = $this->db->insert('analisis_respon',$data);
+							$outp = $this->db->insert('analisis_respon', $data);
 						}
 					}
 					next($id_ia);
 				}
 			}
-			if(isset($_POST['it'])){
+			if (isset($_POST['it']))
+			{
 				$id_it = $_POST['it'];
-				foreach($id_it as $id_p){
-					if($id_p != ""){
+				foreach ($id_it as $id_p)
+				{
+					if ($id_p != "")
+					{
 						unset($data);
 						$indikator = key($id_it);
 
 						$sql = "SELECT * FROM analisis_parameter u WHERE jawaban = ? AND id_indikator = ?";
-						$query = $this->db->query($sql,array($id_p,$indikator));
+						$query = $this->db->query($sql, array($id_p, $indikator));
 						$dx = $query->row_array();
-						if(!$dx){
-
+						if (!$dx)
+						{
 							$data['id_indikator'] = $indikator;
 							$data['jawaban'] = $id_p;
-							$this->db->insert('analisis_parameter',$data);
+							$this->db->insert('analisis_parameter', $data);
 							unset($data);
 
 							$sql = "SELECT * FROM analisis_parameter u WHERE jawaban = ? AND id_indikator = ?";
-							$query = $this->db->query($sql,array($id_p,$indikator));
+							$query = $this->db->query($sql, array($id_p, $indikator));
 							$dx = $query->row_array();
 
 							$data2['id_parameter'] = $dx['id'];
 							$data2['id_indikator'] = $indikator;
 							$data2['id_subjek'] = $id;
 							$data2['id_periode'] = $per;
-							$outp = $this->db->insert('analisis_respon',$data2);
-
-						}else{
-
+							$outp = $this->db->insert('analisis_respon', $data2);
+						}
+						else
+						{
 							unset($data);
 							$data['id_indikator'] = $indikator;
 							$data['id_parameter'] = $dx['id'];
 
 							$data['id_subjek'] = $id;
 							$data['id_periode'] = $per;
-							$outp = $this->db->insert('analisis_respon',$data);
+							$outp = $this->db->insert('analisis_respon', $data);
 						}
 					}
 					next($id_it);
@@ -344,7 +393,7 @@
 			}
 
 			$sql = "SELECT SUM(i.bobot * nilai) as jml FROM analisis_respon r LEFT JOIN analisis_indikator i ON r.id_indikator = i.id LEFT JOIN analisis_parameter z ON r.id_parameter = z.id WHERE r.id_subjek = ? AND i.act_analisis=1 AND r.id_periode=?";
-			$query = $this->db->query($sql,array($id,$per));
+			$query = $this->db->query($sql, array($id, $per));
 			$dx = $query->row_array();
 
 			$upx['id_master'] 	= $id_master;
@@ -367,12 +416,16 @@
 				} else {
 					$nama_file = $_SESSION['analisis_master']."_".$per."_".$id."_".rand(10000,99999).".jpg";
 					UploadPengesahan($nama_file);
-					$bukti['pengesahan'] 	= $nama_file;
-					$bukti['id_master'] 	= $id_master;
-					$bukti['id_subjek'] 	= $id;
-					$bukti['id_periode'] 	= $per;
+					$bukti['pengesahan'] = $nama_file;
+					$bukti['id_master'] = $id_master;
+					$bukti['id_subjek'] = $id;
+					$bukti['id_periode'] = $per;
 
-					$outp = $this->db->insert('analisis_respon_bukti',$bukti);
+					$ada_bukti = $this->db->where(array('id_master' => $id_master, 'id_subjek' => $id, 'id_periode' => $per))->get('analisis_respon_bukti')->num_rows();
+					if ($ada_bukti > 0)
+						$outp = $this->db->where(array('id_master' => $id_master, 'id_subjek' => $id, 'id_periode' => $per))->update('analisis_respon_bukti', $bukti);
+					else
+						$outp = $this->db->insert('analisis_respon_bukti', $bukti);
 				}
 			}
 		}
